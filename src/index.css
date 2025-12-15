@@ -27,7 +27,9 @@ body[data-phase="confirm"] {
     -webkit-touch-callout: none;
 }
 
-/* Blur content if captured (experimental - limited browser support) */
+/* Blur effect for screenshot protection (experimental - limited browser support)
+   Note: Currently set to 0px as a placeholder. Can be increased if visual protection is desired,
+   but may impact user experience. The pseudo-element is in place for potential future use. */
 @media (prefers-reduced-transparency: no-preference) {
     body[data-phase="assessment"]::before,
     body[data-phase="confirm"]::before {

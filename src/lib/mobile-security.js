@@ -44,16 +44,16 @@ export function isMobile() {
 export function isWebView() {
 	const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 	
-	// Check for common WebView indicators
-	const isWebViewUA = /wv|WebView|Version\/[\d\.]+.*Safari/.test(userAgent);
+	// Check for common WebView indicators in user agent
+	const isWebViewUA = /wv|WebView/.test(userAgent);
 	
-	// Check for missing navigator properties that native browsers have
-	const isMissingProps = !navigator.standalone && typeof navigator.standalone !== 'undefined';
+	// iOS standalone mode detection
+	const isIOSStandalone = typeof navigator.standalone !== 'undefined' && navigator.standalone === true;
 	
-	// Android WebView detection
-	const isAndroidWebView = isAndroid() && /Version\/[\d\.]+/.test(userAgent) && /Chrome\/[\d\.]+/.test(userAgent);
+	// Android WebView detection - has Version/ and Chrome/ but not full Chrome browser
+	const isAndroidWebView = isAndroid() && /Version\/[\d\.]+/.test(userAgent) && /Chrome\/[\d\.]+/.test(userAgent) && !/Chrome\/[\d\.]+ Mobile/.test(userAgent);
 	
-	return isWebViewUA || isMissingProps || isAndroidWebView;
+	return isWebViewUA || isIOSStandalone || isAndroidWebView;
 }
 
 /**
@@ -406,6 +406,10 @@ export function removeWatermark() {
 // iOS SPECIFIC DETECTION
 // ============================================================================
 
+// iOS screenshot detection thresholds
+const IOS_SCREENSHOT_MIN_PAUSE_MS = 100; // Minimum pause duration to consider
+const IOS_SCREENSHOT_MAX_PAUSE_MS = 800; // Maximum pause duration to consider
+
 /**
  * Monitors for iOS screenshot characteristic pause
  * Returns a cleanup function
@@ -420,8 +424,8 @@ export function setupIOSScreenshotDetection(onPotentialScreenshot) {
 		const now = Date.now();
 		const pauseDuration = now - lastActivity;
 		
-		// iOS screenshots can cause a brief pause in activity (100-500ms)
-		if (pauseDuration > 100 && pauseDuration < 800) {
+		// iOS screenshots can cause a brief pause in activity
+		if (pauseDuration > IOS_SCREENSHOT_MIN_PAUSE_MS && pauseDuration < IOS_SCREENSHOT_MAX_PAUSE_MS) {
 			onPotentialScreenshot({ pauseDuration });
 		}
 		
