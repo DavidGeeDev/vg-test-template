@@ -30,3 +30,4 @@ export const Sparkles = (p) => <Icon {...p} path={<><path d="m12 3-1.912 5.813a2
 export const Check = (p) => <Icon {...p} path={<><polyline points="20 6 9 17 4 12" /></>} />;
 export const X = (p) => <Icon {...p} path={<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>} />;
 export const Send = (p) => <Icon {...p} path={<><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></>} />;
+export const Smartphone = (p) => <Icon {...p} path={<><rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></>} />;

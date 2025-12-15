@@ -1,8 +1,11 @@
 import React from 'react';
-import { Shield, Check, CheckCircle, AlertTriangle, Play } from './Icons';
+import { Shield, Check, CheckCircle, AlertTriangle, Play, Smartphone } from './Icons';
 
-export default function Landing({ onStart }) {
+export default function Landing({ onStart, deviceInfo }) {
 	const BRAND_BLUE = "#2980b9";
+	const isMobile = deviceInfo?.isMobile || false;
+	const deviceType = deviceInfo?.deviceType || 'Desktop';
+	const isWebView = deviceInfo?.isWebView || false;
 
 	return (
 		<div className="relative z-10 container mx-auto px-4 min-h-screen flex flex-col items-center justify-center py-10">
@@ -70,6 +73,51 @@ export default function Landing({ onStart }) {
 						</ul>
 					</div>
 				</div>
+
+				{/* MOBILE-SPECIFIC WARNINGS */}
+				{isMobile && (
+					<div className="mb-12">
+						<div className="bg-blue-50 rounded-2xl p-6 border-2 border-blue-300">
+							<h3 className="text-blue-900 font-bold text-lg mb-4 flex items-center gap-2">
+								<Smartphone size={22} className="text-blue-600" /> Mobile Device Detected: {deviceType}
+							</h3>
+							<div className="space-y-3 text-blue-900 text-sm">
+								<p className="flex gap-3">
+									<AlertTriangle size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+									<span>
+										<strong>Screenshots are monitored.</strong> Taking screenshots during the exam may be logged for review.
+									</span>
+								</p>
+								<p className="flex gap-3">
+									<AlertTriangle size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+									<span>
+										<strong>Stay in the app.</strong> Switching to other apps, notifications, or control center will fail the exam.
+									</span>
+								</p>
+								<p className="flex gap-3">
+									<AlertTriangle size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+									<span>
+										<strong>Keep screen active.</strong> Do not use split-screen, picture-in-picture, or screen recording features.
+									</span>
+								</p>
+								{isWebView && (
+									<p className="flex gap-3">
+										<AlertTriangle size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+										<span>
+											<strong>In-app browser detected.</strong> Enhanced monitoring is active for WebView environments.
+										</span>
+									</p>
+								)}
+								<p className="flex gap-3 mt-4 pt-3 border-t border-blue-200">
+									<CheckCircle size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+									<span>
+										<strong>Your device type is supported.</strong> Mobile users can complete the exam successfully by following all guidelines.
+									</span>
+								</p>
+							</div>
+						</div>
+					</div>
+				)}
 
 				<div className="flex flex-wrap justify-center gap-3">
 					<button

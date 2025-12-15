@@ -79,6 +79,39 @@ function setInteractionLock() {
 	return true;
 }
 
+// Log mobile-specific security events
+function logMobileSecurityEvent(eventType, details) {
+	if (!initialized && !initialize()) return false;
+	var idx = getValue("cmi.interactions._count");
+	var n = parseInt(idx, 10);
+	if (isNaN(n)) n = 0;
+	
+	setValue("cmi.interactions." + n + ".id", "mobile_security_" + eventType);
+	setValue("cmi.interactions." + n + ".type", "other");
+	
+	var description = "Mobile: " + eventType;
+	if (details) {
+		description += " | " + JSON.stringify(details);
+	}
+	setValue("cmi.interactions." + n + ".description", description);
+	commit();
+	return true;
+}
+
+// Log device information for audit
+function logDeviceInfo(deviceType, deviceEnvironment) {
+	if (!initialized && !initialize()) return false;
+	var idx = getValue("cmi.interactions._count");
+	var n = parseInt(idx, 10);
+	if (isNaN(n)) n = 0;
+	
+	setValue("cmi.interactions." + n + ".id", "device_info");
+	setValue("cmi.interactions." + n + ".type", "other");
+	setValue("cmi.interactions." + n + ".description", "Device: " + deviceType + " | Environment: " + deviceEnvironment);
+	commit();
+	return true;
+}
+
 // Retain legacy complete helper
 function complete(score) {
 	if (!initialized) initialize();
@@ -103,7 +136,9 @@ const ScormAPI = {
 	complete,
 	formatTime,
 	parseTime,
-	setInteractionLock
+	setInteractionLock,
+	logMobileSecurityEvent,
+	logDeviceInfo
 };
 
 export default ScormAPI;
