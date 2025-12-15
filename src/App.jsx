@@ -7,6 +7,7 @@ import Assessment from './components/Assessment';
 import Confirmation from './components/Confirmation';
 import Results from './components/Results';
 import { AlertOctagon } from './components/Icons';
+import * as MobileSecurity from './lib/mobile-security';
 
 function App() {
 	const [phase, setPhase] = useState('landing'); // landing | registration | assessment | confirm | results
@@ -24,6 +25,14 @@ function App() {
 	const [feedback, setFeedback] = useState([]);
 	const [passed, setPassed] = useState(false);
 	const [completedAt, setCompletedAt] = useState(null);
+	
+	// Mobile device detection
+	const [deviceInfo] = useState({
+		isMobile: MobileSecurity.isMobile(),
+		deviceType: MobileSecurity.getDeviceType(),
+		deviceEnvironment: MobileSecurity.getDeviceEnvironment(),
+		isWebView: MobileSecurity.isWebView()
+	});
 
 	// Mirror phase to body for print CSS
 	useEffect(() => {
@@ -45,6 +54,12 @@ function App() {
 		if (!ok) {
 			console.warn("SCORM could not initialize");
 		}
+		
+		// Log device information for audit
+		if (deviceInfo.isMobile) {
+			ScormAPI.logDeviceInfo(deviceInfo.deviceType, deviceInfo.deviceEnvironment);
+		}
+		
 		const handleBeforeUnload = () => {
 			ScormAPI.finish();
 		};
@@ -53,7 +68,7 @@ function App() {
 			ScormAPI.finish();
 			window.removeEventListener('beforeunload', handleBeforeUnload);
 		};
-	}, []);
+	}, [deviceInfo]);
 
 	// Disable right-click during assessment phases
 	useEffect(() => {
@@ -97,6 +112,80 @@ function App() {
 		};
 	}, [phase, windowLocked, showResults]);
 
+	// Mobile-specific security enhancements
+	useEffect(() => {
+		if ((phase !== 'assessment' && phase !== 'confirm') || windowLocked || showResults) {
+			return;
+		}
+
+		const cleanupFunctions = [];
+
+		// Mobile visibility handlers (pagehide/pageshow, freeze/resume)
+		const cleanupVisibility = MobileSecurity.setupMobileVisibilityHandlers((eventType) => {
+			ScormAPI.logMobileSecurityEvent('visibility', { eventType });
+			// Only lock on pagehide (user navigated away)
+			if (eventType === 'pagehide') {
+				setWindowLocked(true);
+				setTimerActive(false);
+				ScormAPI.setInteractionLock();
+				safeSetAndCommit("cmi.core.score.raw", 0);
+				safeSetAndCommit("cmi.core.lesson_status", "failed");
+			}
+		});
+		cleanupFunctions.push(cleanupVisibility);
+
+		// Touch event monitoring
+		const cleanupTouch = MobileSecurity.setupTouchEventMonitoring((activityType, details) => {
+			ScormAPI.logMobileSecurityEvent('touch_' + activityType, details);
+			// Log but don't lock - these are informational
+		});
+		cleanupFunctions.push(cleanupTouch);
+
+		// Orientation change monitoring
+		const cleanupOrientation = MobileSecurity.setupOrientationMonitoring((orientation) => {
+			ScormAPI.logMobileSecurityEvent('orientation_change', { orientation });
+		});
+		cleanupFunctions.push(cleanupOrientation);
+
+		// Android-specific monitoring
+		const cleanupAndroid = MobileSecurity.setupAndroidMonitoring((activityType, details) => {
+			ScormAPI.logMobileSecurityEvent('android_' + activityType, details);
+			// Log significant resize events but don't auto-lock
+		});
+		cleanupFunctions.push(cleanupAndroid);
+
+		// Picture-in-Picture monitoring
+		const cleanupPip = MobileSecurity.setupPictureInPictureMonitoring((isActive) => {
+			ScormAPI.logMobileSecurityEvent('pip', { isActive });
+			if (isActive) {
+				// Lock on PiP activation
+				setWindowLocked(true);
+				setTimerActive(false);
+				ScormAPI.setInteractionLock();
+				safeSetAndCommit("cmi.core.score.raw", 0);
+				safeSetAndCommit("cmi.core.lesson_status", "failed");
+			}
+		});
+		cleanupFunctions.push(cleanupPip);
+
+		// iOS screenshot detection
+		const cleanupIOSScreenshot = MobileSecurity.setupIOSScreenshotDetection((details) => {
+			ScormAPI.logMobileSecurityEvent('ios_potential_screenshot', details);
+		});
+		cleanupFunctions.push(cleanupIOSScreenshot);
+
+		// Screen capture detection (run once on mount)
+		MobileSecurity.detectScreenCapture().then((result) => {
+			if (result.active) {
+				ScormAPI.logMobileSecurityEvent('screen_capture_detected', result);
+			}
+		});
+
+		return () => {
+			cleanupFunctions.forEach(cleanup => cleanup());
+		};
+	}, [phase, windowLocked, showResults]);
+
 	const handleStartAssessment = () => {
 		if (!user.name || !user.agency) return;
 		setPhase('assessment');
@@ -106,6 +195,13 @@ function App() {
 
 		safeSetAndCommit("cmi.core.student_name", user.name);
 		safeSetAndCommit("cmi.core.lesson_status", "incomplete");
+		
+		// Apply mobile hardening measures
+		if (deviceInfo.isMobile) {
+			MobileSecurity.preventZoom();
+			MobileSecurity.preventPullToRefresh();
+			MobileSecurity.createWatermark(user.name, user.agency);
+		}
 	};
 
 	const handleOptionToggle = (questionId, optionId) => {
@@ -204,6 +300,11 @@ function App() {
 		setFeedback([]);
 		setPassed(false);
 		setCompletedAt(null);
+		
+		// Remove mobile watermark if present
+		if (deviceInfo.isMobile) {
+			MobileSecurity.removeWatermark();
+		}
 	};
 
 	const handleRestartFromLock = () => {
@@ -254,7 +355,7 @@ function App() {
 			)}
 
 			{phase === 'landing' && (
-				<Landing onStart={() => setPhase('registration')} />
+				<Landing onStart={() => setPhase('registration')} deviceInfo={deviceInfo} />
 			)}
 
 			{phase === 'registration' && (

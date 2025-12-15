@@ -8,6 +8,42 @@ body {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    
+    /* Mobile-specific security enhancements */
+    -webkit-touch-callout: none; /* Prevents callout on long press (iOS) */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+    overscroll-behavior: none; /* Prevent overscroll/bounce */
+    touch-action: manipulation; /* Disable double-tap zoom */
+}
+
+/* Additional mobile hardening during assessment */
+body[data-phase="assessment"],
+body[data-phase="confirm"] {
+    /* Prevent screenshot-friendly rendering where supported */
+    content-visibility: auto;
+    
+    /* Additional iOS/Safari specific */
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+}
+
+/* Blur effect for screenshot protection (experimental - limited browser support)
+   Note: Currently set to 0px as a placeholder. Can be increased if visual protection is desired,
+   but may impact user experience. The pseudo-element is in place for potential future use. */
+@media (prefers-reduced-transparency: no-preference) {
+    body[data-phase="assessment"]::before,
+    body[data-phase="confirm"]::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        z-index: -1;
+        backdrop-filter: blur(0px);
+        transition: backdrop-filter 0.1s;
+    }
 }
 
 @keyframes fadeIn {
