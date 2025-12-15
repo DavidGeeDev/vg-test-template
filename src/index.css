@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Print handling */
+/* Print handling */
+@media print {
+
+    /* 1. Reset Root Containers to allow scrolling/flow */
+    html,
+    body,
+    #root {
+        height: auto !important;
+        overflow: visible !important;
+        position: relative !important;
+    }
+
+    /* 2. Hide everything by default */
+    body:not([data-phase="results"]) * {
+        visibility: hidden !important;
+    }
+
+    /* 3. Handle the Results Phase */
+    body[data-phase="results"] * {
+        visibility: hidden !important;
+    }
+
+    /* 4. Un-fix the wrapper so it flows on paper */
+    body[data-phase="results"] #print-wrapper {
+        visibility: visible !important;
+        position: static !important;
+        inset: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        background: none !important;
+        /* Remove dark overlay for ink saving */
+        overflow: visible !important;
+    }
+
+    /* 5. Style the content card */
+    body[data-phase="results"] #results-printable,
+    body[data-phase="results"] #results-printable * {
+        visibility: visible !important;
+    }
+
+    body[data-phase="results"] #results-printable {
+        position: static !important;
+        margin: 0 auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        box-shadow: none !important;
+        border: 2px solid #ccc;
+        /* Add a border for professionalism */
+    }
+
+    /* 6. Hide the buttons inside the certificate when printing */
+    body[data-phase="results"] button {
+        display: none !important;
+    }
+}
